@@ -83,6 +83,7 @@
     pintarLista();
     pintarOrden();
     pintarBoton();
+    pintarCierre();
     document.body.classList.toggle('proyector', !!estado.proyector);
     Scene.render(estado.participantes);
   }
@@ -92,6 +93,38 @@
     el.cartel.hidden = false;
   }
   function ocultarCartel() { el.cartel.hidden = true; }
+
+  function pintarCierre() {
+    if (estado.fase !== 'finDeRonda' || !estado.yaPasaron.length) {
+      el.cierre.hidden = true;
+      return;
+    }
+    el.cierreOrden.innerHTML = '';
+    estado.yaPasaron.forEach(function (p) {
+      var li = document.createElement('li');
+      li.textContent = p.nombre;
+      el.cierreOrden.appendChild(li);
+    });
+    ocultarCartel();          // si no, el último "le toca a" se transparenta tras el velo
+    el.cierre.hidden = false;
+  }
+
+  function enCampoDeTexto() {
+    var a = document.activeElement;
+    return !!a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.isContentEditable);
+  }
+
+  function atajos(ev) {
+    if (enCampoDeTexto()) return;             // si escribes una efe, se escribe una efe
+    if (ev.code === 'Space' || ev.key === 'Enter') {
+      ev.preventDefault();
+      if (!el.disparar.disabled) disparar();
+    } else if (ev.key === 'f' || ev.key === 'F') {
+      proyector();
+    } else if (ev.key === 'Escape' && estado.proyector) {
+      proyector();
+    }
+  }
 
   // ── acciones ──
 
@@ -147,6 +180,7 @@
       pintarLista();
       pintarOrden();
       pintarBoton();
+      pintarCierre();
       // La escena ya quitó al mono caído; se repinta solo al cambiar la lista.
     }).catch(function (err) {
       // Si la animación truena, el botón no puede quedarse bloqueado para siempre.
@@ -187,6 +221,8 @@
     el.orden = $('orden');
     el.cartel = $('cartel');
     el.cartelNombre = $('cartel-nombre');
+    el.cierre = $('cierre');
+    el.cierreOrden = $('cierre-orden');
     el.reiniciar = $('reiniciar');
     el.proyector = $('proyector');
     el.aviso = $('aviso');
@@ -208,6 +244,7 @@
     el.disparar.addEventListener('click', disparar);
     el.reiniciar.addEventListener('click', function () { reiniciar(false); });
     el.proyector.addEventListener('click', proyector);
+    document.addEventListener('keydown', atajos);
 
     pintar();
     el.proyector.textContent = estado.proyector ? 'Salir del proyector' : 'Modo proyector';

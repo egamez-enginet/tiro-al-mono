@@ -99,6 +99,46 @@ body {
   to   { transform: translateX(-50%) rotate(-1.2deg) scale(1); opacity: 1; }
 }
 
+/* ── cierre de ronda ── */
+.cierre {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  background: rgba(244, 233, 214, .95);
+  /* Keyframe propio: el del cartel lleva translateX(-50%) para centrarse, y aquí
+     correría el velo media pantalla a la izquierda. */
+  animation: cierre-entra .6s ease both;
+}
+@keyframes cierre-entra {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.cierre[hidden] { display: none; }
+.cierre-titulo {
+  margin: 0;
+  font: 30px/1 var(--display);
+  color: var(--teal);
+}
+.cierre-orden {
+  margin: 0; padding: 0; list-style: none;
+  counter-reset: cierre;
+  display: flex; flex-direction: column; gap: 7px;
+  text-align: center;
+}
+.cierre-orden li {
+  counter-increment: cierre;
+  font-size: 16px;
+}
+.cierre-orden li::before {
+  content: counter(cierre) '. ';
+  color: var(--ox);
+  font-size: 12px;
+}
+
 /* ── botón de disparar ── */
 .acciones { margin-top: 18px; display: flex; align-items: center; gap: 18px; }
 .tirar {
@@ -216,6 +256,14 @@ body.proyector .orden li { border: 0; }
 body.proyector .titular h1 { font-size: 34px; }
 body.proyector .tirar { padding: 20px 66px; font-size: 25px; }
 body.proyector .cartel strong { font-size: 44px; }
+/* La escena crece por ancho, así que en proyector se le pone techo por altura:
+   si no, empuja la tira de "Ya pasaron" fuera de la pantalla y hay que scrollear
+   a media reunión. 900/520 es la proporción del viewBox. */
+body.proyector .marco {
+  /* 330px = titular + botón + tira + paddings + el borde del marco, medido. */
+  max-width: calc((100vh - 330px) * 1.7308);
+  margin: 0 auto;
+}
 
 /* ── pantallas angostas ── */
 @media (max-width: 960px) {
