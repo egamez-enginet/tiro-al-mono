@@ -105,11 +105,54 @@
     return siguiente;
   }
 
+  var LLAVE = 'tiro-al-mono/v1';
+  var VERSION = 1;
+  var FASES = ['preparacion', 'disparando', 'revelado', 'finDeRonda'];
+
+  function serializar(estado) {
+    return JSON.stringify({
+      v: VERSION,
+      participantes: estado.participantes,
+      yaPasaron: estado.yaPasaron,
+      fase: estado.fase,
+      proyector: !!estado.proyector
+    });
+  }
+
+  function esListaDePersonas(x) {
+    return Array.isArray(x) && x.every(function (p) {
+      return p && typeof p.id === 'string' && typeof p.nombre === 'string';
+    });
+  }
+
+  function deserializar(texto) {
+    var d;
+    try { d = JSON.parse(texto); } catch (e) { return null; }
+    if (!d || typeof d !== 'object' || d.v !== VERSION) return null;
+    if (!esListaDePersonas(d.participantes) || !esListaDePersonas(d.yaPasaron)) return null;
+    if (FASES.indexOf(d.fase) === -1) return null;
+    // 'disparando' es una fase transitoria: si la recarga cayó justo a media flecha,
+    // guardarla dejaría el botón bloqueado para siempre. Se aterriza en algo estable.
+    var fase = d.fase;
+    if (fase === 'disparando') fase = d.participantes.length ? 'preparacion' : 'finDeRonda';
+    return {
+      participantes: d.participantes,
+      yaPasaron: d.yaPasaron,
+      fase: fase,
+      proyector: !!d.proyector
+    };
+  }
+
+  function recortar(nombre, max) {
+    return nombre.length <= max ? nombre : nombre.slice(0, max - 1) + '…';
+  }
+
   var Logic = {
     PELOS: PELOS, GORROS: GORROS, hash: hash, identidad: identidad,
     elegirIndice: elegirIndice, crearEstado: crearEstado,
     iniciarDisparo: iniciarDisparo, resolverDisparo: resolverDisparo,
-    reiniciarRonda: reiniciarRonda
+    reiniciarRonda: reiniciarRonda,
+    LLAVE: LLAVE, serializar: serializar, deserializar: deserializar, recortar: recortar
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = Logic;

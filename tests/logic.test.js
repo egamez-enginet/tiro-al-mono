@@ -126,3 +126,38 @@ test('reiniciarRonda devuelve a todos a la rama sin perder a nadie', () => {
   assert.deepStrictEqual(r.yaPasaron, []);
   assert.strictEqual(r.fase, 'preparacion');
 });
+
+test('el estado sobrevive un ciclo de guardar y cargar', () => {
+  let e = Logic.crearEstado(['Ana', 'Luis', 'Sofía', 'Diego']);
+  e = Logic.resolverDisparo(e, 2).estado;   // cae Sofía
+  e = Logic.resolverDisparo(e, 0).estado;   // cae Ana
+  const vuelta = Logic.deserializar(Logic.serializar(e));
+  assert.deepStrictEqual(vuelta, e);
+  assert.deepStrictEqual(vuelta.yaPasaron.map(p => p.nombre), ['Sofía', 'Ana'],
+    'el orden de caída no se reordena');
+});
+
+test('deserializar devuelve null ante basura', () => {
+  for (const basura of ['', 'null', '{', '[]', '{"fase":"x"}', '{"participantes":"no"}']) {
+    assert.strictEqual(Logic.deserializar(basura), null, `no rechazó: ${basura}`);
+  }
+});
+
+test('deserializar rechaza otra version del formato', () => {
+  const viejo = JSON.stringify({ v: 0, participantes: [], yaPasaron: [], fase: 'preparacion', proyector: false });
+  assert.strictEqual(Logic.deserializar(viejo), null);
+});
+
+test('deserializar no arrastra una fase a medio disparo', () => {
+  let e = Logic.crearEstado(['Ana', 'Luis']);
+  e = Logic.iniciarDisparo(e).estado;                   // fase: 'disparando'
+  const vuelta = Logic.deserializar(Logic.serializar(e));
+  assert.strictEqual(vuelta.fase, 'preparacion',
+    'una recarga a media flecha no debe dejar el botón bloqueado para siempre');
+});
+
+test('recortar acorta con puntos y respeta lo corto', () => {
+  assert.strictEqual(Logic.recortar('Ana', 14), 'Ana');
+  assert.strictEqual(Logic.recortar('Bartolomé Estanislao', 14), 'Bartolomé Est…');
+  assert.strictEqual(Logic.recortar('Bartolomé Estanislao', 14).length, 14);
+});
