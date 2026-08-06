@@ -56,10 +56,12 @@
   // Arquero de perfil, caja 106x104. tension 0..1 dobla el arco y jala el codo.
   function arquero(o) {
     var t = Math.max(0, Math.min(1, o.tension || 0));
-    var jalon = 16 * t;                 // cuánto retrocede la cuerda
-    var curva = 88 + 12 * t;            // cuánto se dobla la pala del arco
-    var codo = 40 - 10 * t;             // el codo sube al tensar
-    var s = '<g transform="translate(' + n(o.x) + ',' + n(o.y) + ') scale(' + n(o.escala) + ')">';
+    var jalon = 26 * t;                 // cuánto retrocede la cuerda
+    var curva = 88 + 17 * t;            // cuánto se dobla la pala del arco
+    var codo = 40 - 11 * t;             // el codo sube al tensar
+    var lean = -2.5 * t;                // el torso se recuesta un poco hacia atrás
+    var s = '<g transform="translate(' + n(o.x) + ',' + n(o.y) + ') scale(' + n(o.escala) +
+            ') rotate(' + n(lean) + ' 44 70)">';
     // piernas y pies
     s += '<path d="M40,66 L30,102 M46,66 L60,100" stroke="' + TEAL + '" stroke-width="11" stroke-linecap="round" fill="none"/>';
     s += '<ellipse cx="26" cy="103" rx="9" ry="4" fill="' + TINTA + '"/><ellipse cx="64" cy="102" rx="9" ry="4" fill="' + TINTA + '"/>';
@@ -73,9 +75,11 @@
     s += '<path d="M74,-4 Q' + n(curva) + ',34 74,72" fill="none" stroke="' + MADERA + '" stroke-width="5" stroke-linecap="round"/>';
     // cuerda en V, jalada hacia atrás
     s += '<path d="M74,-4 L' + n(58 - jalon) + ',34 L74,72" fill="none" stroke="' + TINTA + '" stroke-width="1.6"/>';
-    // flecha nocada
-    s += '<path d="M' + n(56 - jalon) + ',34 L' + PUNTA.x + ',34" stroke="' + TINTA + '" stroke-width="2.6"/>';
-    s += '<path d="M' + PUNTA.x + ',34 l-9,-4 l0,8 Z" fill="' + LATON + '"/>';
+    // Flecha nocada: se desliza hacia atrás en vez de estirarse. La punta recorre
+    // un poco menos que la cuerda para que no se esconda detrás de la mano del arco.
+    var punta = PUNTA.x - jalon * .7;
+    s += '<path d="M' + n(56 - jalon) + ',34 L' + n(punta) + ',34" stroke="' + TINTA + '" stroke-width="2.6"/>';
+    s += '<path d="M' + n(punta) + ',34 l-9,-4 l0,8 Z" fill="' + LATON + '"/>';
     s += '<path d="M' + n(56 - jalon) + ',34 l7,-6 M' + n(56 - jalon) + ',34 l7,6" stroke="' + OX + '" stroke-width="2.4" fill="none"/>';
     // brazos: el de atrás jala
     s += '<path d="M40,38 L72,34" stroke="' + OX + '" stroke-width="8.5" stroke-linecap="round" fill="none"/>';

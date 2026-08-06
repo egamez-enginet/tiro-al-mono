@@ -130,7 +130,145 @@
     return m ? { x: m.cx, y: m.cy } : null;
   }
 
-  var Scene = { init: init, render: render, posicionDe: posicionDe,
+  // Animador mínimo: corre f(t) con t de 0 a 1 durante ms, y resuelve al terminar.
+  function animar(ms, f) {
+    return new Promise(function (listo) {
+      if (ms <= 0) { f(1); listo(); return; }
+      var inicio = null;
+      function paso(ahora) {
+        if (inicio === null) inicio = ahora;
+        var t = Math.min(1, (ahora - inicio) / ms);
+        f(t);
+        if (t < 1) requestAnimationFrame(paso); else listo();
+      }
+      requestAnimationFrame(paso);
+    });
+  }
+
+  function esperar(ms) { return animar(ms, function () {}); }
+
+  // Bézier cuadrática y su tangente, para que la punta de la flecha
+  // apunte a donde va y no siempre al frente.
+  function bezier(p0, p1, p2, t) {
+    var u = 1 - t;
+    return {
+      x: u * u * p0.x + 2 * u * t * p1.x + t * t * p2.x,
+      y: u * u * p0.y + 2 * u * t * p1.y + t * t * p2.y,
+      ang: Math.atan2(2 * u * (p1.y - p0.y) + 2 * t * (p2.y - p1.y),
+                      2 * u * (p1.x - p0.x) + 2 * t * (p2.x - p1.x)) * 180 / Math.PI
+    };
+  }
+
+  function tiempos() {
+    return reducido
+      ? { tensar: 120, soltar: 30, vuelo: 300, impacto: 50, caida: 200 }
+      : { tensar: 450, soltar: 70, vuelo: 830, impacto: 100, caida: 650 };
+  }
+
+  function lluvia(x, y) {
+    var piezas = [], i, s = '';
+    var cuantas = reducido ? 6 : 16;
+    for (i = 0; i < cuantas; i++) {
+      // Deliberadamente pseudoaleatorio y no determinista: cada impacto se ve
+      // distinto, y nadie audita la trayectoria de un plátano.
+      var esHoja = i % 4 === 3;
+      var ang = (-140 + Math.random() * 100) * Math.PI / 180;
+      var vel = 3.4 + Math.random() * 3.6;
+      piezas.push({
+        x: x, y: y,
+        vx: Math.cos(ang) * vel,
+        vy: Math.sin(ang) * vel,
+        giro: (Math.random() - .5) * 22,
+        rot: Math.random() * 360
+      });
+      s += '<g class="pieza">' + (esHoja ? Sprites.hoja({ rot: 0 }) : Sprites.platano({ rot: 0 })) + '</g>';
+    }
+    var capa = crear('g');
+    capa.innerHTML = s;
+    capaVuelo.appendChild(capa);
+    var nodos = capa.querySelectorAll('.pieza');
+
+    animar(reducido ? 320 : 1100, function (t) {
+      piezas.forEach(function (p, k) {
+        p.x += p.vx; p.y += p.vy; p.vy += .34; p.rot += p.giro;
+        nodos[k].setAttribute('transform',
+          'translate(' + p.x.toFixed(1) + ',' + p.y.toFixed(1) + ') rotate(' + p.rot.toFixed(1) + ')');
+        nodos[k].setAttribute('opacity', (1 - t * t).toFixed(2));
+      });
+    }).then(function () { capa.remove(); });
+  }
+
+  function destello(x, y) {
+    var g = crear('g');
+    g.setAttribute('class', 'destello');
+    g.innerHTML = '<g transform="translate(' + x + ',' + y + ')" stroke="#8E2118" ' +
+      'stroke-width="3" fill="none" stroke-linecap="round">' +
+      '<path d="M0,-20 v-11 M0,20 v11 M-20,0 h-11 M20,0 h11 ' +
+      'M-15,-15 l-8,-8 M15,15 l8,8 M15,-15 l8,-8 M-15,15 l-8,8"/></g>';
+    capaVuelo.appendChild(g);
+    setTimeout(function () { g.remove(); }, reducido ? 120 : 260);
+  }
+
+  function shoot(indice) {
+    var destino = posicionDe(indice);
+    if (!destino) return Promise.reject(new Error('no hay mono en el índice ' + indice));
+
+    var T = tiempos();
+    var grupo = capaMonos.querySelector('[data-indice="' + indice + '"]');
+    var punta = Sprites.puntaFlecha({ escala: ARQUERO.escala });
+    var origen = { x: ARQUERO.x + punta.x, y: ARQUERO.y + punta.y };
+    // Control levantado por encima de los dos extremos: la parábola sale distinta
+    // para cada mono según qué tan lejos y qué tan alto esté.
+    var control = {
+      x: (origen.x + destino.x) / 2,
+      y: Math.min(origen.y, destino.y) - 90 - Math.abs(destino.x - origen.x) * .16
+    };
+
+    // 1. Tensado
+    return animar(T.tensar, function (t) {
+      dibujarArquero(t * t * (3 - 2 * t));       // suavizado
+    })
+    // 2. Suelta
+    .then(function () {
+      return animar(T.soltar, function (t) { dibujarArquero(1 - t); });
+    })
+    // 3. Vuelo
+    .then(function () {
+      dibujarArquero(0);
+      var g = crear('g');
+      g.innerHTML = Sprites.flecha();
+      capaVuelo.appendChild(g);
+      return animar(T.vuelo, function (t) {
+        var p = bezier(origen, control, destino, t);
+        g.setAttribute('transform',
+          'translate(' + p.x.toFixed(1) + ',' + p.y.toFixed(1) + ') rotate(' + p.ang.toFixed(1) + ')');
+      }).then(function () { setTimeout(function () { g.remove(); }, T.impacto); });
+    })
+    // 4. Impacto
+    .then(function () {
+      destello(destino.x, destino.y);
+      if (grupo) grupo.classList.add('sacudida');
+      return esperar(T.impacto);
+    })
+    // 5. Caída
+    .then(function () {
+      lluvia(destino.x, destino.y);
+      if (!grupo) return esperar(T.caida);
+      grupo.classList.remove('sacudida');
+      grupo.classList.add('cayendo');
+      var haciaX = (Math.random() - .3) * 90;
+      return animar(T.caida, function (t) {
+        var caida = t * t * (ALTO - destino.y + 140);
+        grupo.setAttribute('transform',
+          'translate(' + (haciaX * t).toFixed(1) + ',' + caida.toFixed(1) +
+          ') rotate(' + (540 * t).toFixed(1) + ' ' + destino.x + ' ' + destino.y + ')');
+        grupo.setAttribute('opacity', t > .75 ? ((1 - t) / .25).toFixed(2) : '1');
+      });
+    })
+    .then(function () { if (grupo) grupo.remove(); });
+  }
+
+  var Scene = { init: init, render: render, posicionDe: posicionDe, shoot: shoot,
                 ANCHO: ANCHO, ALTO: ALTO };
 
   global.Scene = Scene;

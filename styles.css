@@ -233,9 +233,18 @@ body.proyector .cartel strong { font-size: 44px; }
 }
 .colgado.cayendo { animation: none; }
 
+/* ── sacudón del impacto ── */
+.sacudida { animation: sacudir .1s linear 2; }
+@keyframes sacudir {
+  0%, 100% { transform: translateX(0); }
+  25%  { transform: translateX(-3px); }
+  75%  { transform: translateX(3px); }
+}
+
 /* ── quien pidió menos movimiento ── */
 @media (prefers-reduced-motion: reduce) {
   .cartel { animation-duration: .01s; }
   .tirar { transition: none; }
   .colgado { animation: none; }
+  .sacudida { animation: none; }
 }
