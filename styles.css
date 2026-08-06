@@ -1,0 +1,229 @@
+:root {
+  --papel: #F4E9D6;
+  --papel-2: #EFE2C8;
+  --teal: #0F4C4A;
+  --teal-2: #15625F;
+  --ox: #8E2118;
+  --laton: #C89B3C;
+  --tinta: #2A1B0E;
+  --madera: #7A4A22;
+  --hoja: #4E6E3A;
+  --display: 'Alfa Slab One', Georgia, serif;
+  --texto: 'Libre Baskerville', Georgia, serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--papel);
+  /* grano de papel: un punto cada 4px, casi invisible pero le quita lo plano */
+  background-image: radial-gradient(rgba(120, 90, 40, .07) 1px, transparent 1px);
+  background-size: 4px 4px;
+  color: var(--tinta);
+  font-family: var(--texto);
+}
+
+.tablero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 330px;
+  gap: 28px;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 26px 30px 34px;
+}
+
+/* ── titular ── */
+.titular { margin-bottom: 14px; }
+.kicker {
+  margin: 0 0 6px;
+  font-size: 10px;
+  letter-spacing: .34em;
+  text-transform: uppercase;
+  color: var(--ox);
+}
+.titular h1 {
+  margin: 0;
+  font: 44px/.95 var(--display);
+  color: var(--teal);
+  letter-spacing: -.01em;
+}
+.lema {
+  margin: 8px 0 0;
+  font-style: italic;
+  font-size: 14px;
+  color: var(--madera);
+}
+
+/* ── marco de la escena ── */
+.marco {
+  position: relative;
+  border: 6px solid var(--teal);
+  border-radius: 5px;
+  box-shadow: 0 0 0 2px var(--laton) inset, 7px 7px 0 rgba(42, 27, 14, .14);
+  background: var(--papel);
+  overflow: hidden;
+}
+#escena { display: block; width: 100%; height: auto; }
+
+/* ── cartel de "le toca a" ── */
+.cartel {
+  position: absolute;
+  left: 50%;
+  bottom: 22px;
+  transform: translateX(-50%) rotate(-1.2deg);
+  padding: 14px 34px;
+  background: var(--papel-2);
+  border: 3px solid var(--ox);
+  box-shadow: 6px 6px 0 var(--teal);
+  text-align: center;
+  animation: cartel-entra .32s cubic-bezier(.2, 1.5, .4, 1) both;
+}
+.cartel[hidden] { display: none; }
+.cartel span {
+  display: block;
+  font-size: 9.5px;
+  letter-spacing: .3em;
+  text-transform: uppercase;
+  color: var(--teal);
+}
+.cartel strong {
+  display: block;
+  margin-top: 5px;
+  font: 30px/1 var(--display);
+  color: var(--ox);
+}
+@keyframes cartel-entra {
+  from { transform: translateX(-50%) rotate(-1.2deg) scale(.7); opacity: 0; }
+  to   { transform: translateX(-50%) rotate(-1.2deg) scale(1); opacity: 1; }
+}
+
+/* ── botón de disparar ── */
+.acciones { margin-top: 18px; display: flex; align-items: center; gap: 18px; }
+.tirar {
+  padding: 15px 46px;
+  border: 3px solid var(--teal);
+  background: var(--ox);
+  color: var(--papel);
+  font: 19px/1 var(--display);
+  letter-spacing: .1em;
+  cursor: pointer;
+  box-shadow: 5px 5px 0 var(--teal);
+  transition: transform .07s, box-shadow .07s;
+}
+.tirar:hover:not(:disabled) { transform: translate(-1px, -1px); box-shadow: 6px 6px 0 var(--teal); }
+.tirar:active:not(:disabled) { transform: translate(4px, 4px); box-shadow: 1px 1px 0 var(--teal); }
+.tirar:disabled { background: #B59C7E; border-color: #8C7A62; box-shadow: 5px 5px 0 #8C7A62; cursor: not-allowed; }
+.aviso { margin: 0; font-size: 12.5px; font-style: italic; color: var(--ox); }
+
+/* ── panel lateral ── */
+.panel { display: flex; flex-direction: column; gap: 16px; }
+.panel-caja {
+  padding: 18px 20px;
+  background: var(--papel-2);
+  border: 2px solid var(--laton);
+  border-radius: 3px;
+}
+.panel-caja h2 {
+  margin: 0 0 12px;
+  font: 16px/1 var(--display);
+  color: var(--teal);
+  letter-spacing: .02em;
+}
+
+.lista, .orden { margin: 0; padding: 0; list-style: none; }
+.lista li {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 0;
+  border-bottom: 1px dotted rgba(42, 27, 14, .3);
+  font-size: 13.5px;
+}
+.lista .punto { width: 11px; height: 11px; border-radius: 50%; flex: none; box-shadow: inset 0 0 0 1px rgba(0,0,0,.2); }
+.lista .nombre { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lista .quitar {
+  border: 0; background: none; cursor: pointer;
+  color: var(--ox); font-size: 16px; line-height: 1; padding: 2px 4px;
+}
+.lista .vacia { color: var(--madera); font-style: italic; border: 0; }
+
+.orden { counter-reset: turno; }
+.orden li {
+  counter-increment: turno;
+  padding: 6px 0 6px 30px;
+  position: relative;
+  font-size: 13.5px;
+  border-bottom: 1px dotted rgba(42, 27, 14, .22);
+}
+.orden li::before {
+  content: counter(turno, decimal-leading-zero);
+  position: absolute; left: 0;
+  font-size: 10px; letter-spacing: .1em;
+  color: var(--ox);
+  top: 8px;
+}
+.orden .vacia { padding-left: 0; color: var(--madera); font-style: italic; border: 0; }
+.orden .vacia::before { content: ''; }
+
+/* ── formulario ── */
+.agregar { display: flex; gap: 7px; margin-top: 13px; }
+.agregar input {
+  flex: 1; min-width: 0;
+  padding: 9px 11px;
+  border: 2px solid var(--madera);
+  background: var(--papel);
+  font: 13.5px var(--texto);
+  color: var(--tinta);
+}
+.agregar input:focus { outline: 2px solid var(--laton); outline-offset: 1px; }
+.agregar button, .panel-pie button, .pegado button {
+  border: 2px solid var(--teal);
+  background: var(--papel);
+  color: var(--teal);
+  font: 13px var(--texto);
+  padding: 9px 13px;
+  cursor: pointer;
+}
+.agregar button { font: 17px/1 var(--display); padding: 0 15px; }
+.agregar button:hover, .panel-pie button:hover, .pegado button:hover { background: var(--teal); color: var(--papel); }
+
+.pegado { margin-top: 15px; font-size: 12.5px; }
+.pegado summary { cursor: pointer; color: var(--teal); }
+.pegado textarea {
+  width: 100%; margin: 9px 0;
+  padding: 9px;
+  border: 2px solid var(--madera);
+  background: var(--papel);
+  font: 12.5px/1.6 var(--texto);
+  resize: vertical;
+}
+.pegado button { width: 100%; }
+
+.panel-pie { display: flex; gap: 9px; }
+.panel-pie button { flex: 1; font-size: 12px; }
+
+/* ── modo proyector ── */
+body.proyector .panel-caja:first-child,
+body.proyector .panel-pie,
+body.proyector .titular .lema { display: none; }
+body.proyector .tablero { grid-template-columns: minmax(0, 1fr); max-width: none; padding: 16px 20px; }
+body.proyector .panel { flex-direction: row; }
+body.proyector .panel-caja { flex: 1; }
+body.proyector .orden { display: flex; flex-wrap: wrap; gap: 6px 20px; }
+body.proyector .orden li { border: 0; }
+body.proyector .titular h1 { font-size: 34px; }
+body.proyector .tirar { padding: 20px 66px; font-size: 25px; }
+body.proyector .cartel strong { font-size: 44px; }
+
+/* ── pantallas angostas ── */
+@media (max-width: 960px) {
+  .tablero { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ── quien pidió menos movimiento ── */
+@media (prefers-reduced-motion: reduce) {
+  .cartel { animation-duration: .01s; }
+  .tirar { transition: none; }
+}

@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tiro al Mono</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<main class="tablero">
+
+  <section class="izquierda">
+    <header class="titular">
+      <p class="kicker">Reunión semanal</p>
+      <h1>Tiro al Mono</h1>
+      <p class="lema">¿A quién le toca dar su resumen?</p>
+    </header>
+
+    <div class="marco">
+      <svg id="escena" viewBox="0 0 900 520" role="img"
+           aria-label="Escena de selva con un arquero y los monos del equipo"></svg>
+      <div id="cartel" class="cartel" hidden>
+        <span>Le toca a</span>
+        <strong id="cartel-nombre"></strong>
+      </div>
+      <div id="cierre" class="cierre" hidden>
+        <p class="cierre-titulo">Ya pasaron todos</p>
+        <ol id="cierre-orden" class="cierre-orden"></ol>
+      </div>
+    </div>
+
+    <div class="acciones">
+      <button id="disparar" class="tirar" type="button">Disparar</button>
+      <p id="aviso" class="aviso" role="status"></p>
+    </div>
+  </section>
+
+  <aside class="panel">
+    <div class="panel-caja">
+      <h2>En la rama</h2>
+      <ul id="lista" class="lista"></ul>
+
+      <form id="forma-agregar" class="agregar">
+        <input id="nuevo" type="text" placeholder="Nombre" autocomplete="off" maxlength="40">
+        <button id="agregar" type="submit">+</button>
+      </form>
+
+      <details class="pegado">
+        <summary>Pegar lista completa</summary>
+        <textarea id="pegar" rows="6" placeholder="Un nombre por línea&#10;Ana&#10;Luis&#10;Sofía"></textarea>
+        <button id="aplicar-pegado" type="button">Reemplazar la rama</button>
+      </details>
+    </div>
+
+    <div class="panel-caja">
+      <h2>Ya pasaron</h2>
+      <ol id="orden" class="orden"></ol>
+    </div>
+
+    <div class="panel-pie">
+      <button id="proyector" type="button">Modo proyector</button>
+      <button id="reiniciar" type="button">Reiniciar</button>
+    </div>
+  </aside>
+
+</main>
+
+<script src="js/logic.js"></script>
+<script src="js/sprites.js"></script>
+<script src="js/scene.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
