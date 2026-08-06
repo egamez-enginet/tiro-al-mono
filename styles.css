@@ -222,8 +222,20 @@ body.proyector .cartel strong { font-size: 44px; }
   .tablero { grid-template-columns: minmax(0, 1fr); }
 }
 
+/* ── balanceo de las lianas ── */
+.colgado {
+  transform-origin: var(--pivote);
+  animation: mecer var(--vaiven) ease-in-out var(--retraso) infinite alternate;
+}
+@keyframes mecer {
+  from { transform: rotate(-2.2deg); }
+  to   { transform: rotate(2.2deg); }
+}
+.colgado.cayendo { animation: none; }
+
 /* ── quien pidió menos movimiento ── */
 @media (prefers-reduced-motion: reduce) {
   .cartel { animation-duration: .01s; }
   .tirar { transition: none; }
+  .colgado { animation: none; }
 }
