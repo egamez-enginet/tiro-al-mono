@@ -36,3 +36,93 @@ test('identidad da lianas y vaivenes dentro de rango', () => {
     assert.ok(id.retraso >= 0 && id.retraso < id.vaiven, `retraso de ${n}: ${id.retraso}`);
   }
 });
+
+// rng falso: devuelve valores fijos en secuencia, para probar el rechazo de módulo
+function rngFijo(valores) {
+  let i = 0;
+  return () => valores[i++ % valores.length];
+}
+
+test('elegirIndice devuelve un entero en rango', () => {
+  for (let n = 1; n <= 12; n++) {
+    for (let k = 0; k < 200; k++) {
+      const i = Logic.elegirIndice(n);
+      assert.ok(Number.isInteger(i) && i >= 0 && i < n, `n=${n} dio ${i}`);
+    }
+  }
+});
+
+test('elegirIndice rechaza los valores del residuo sesgado', () => {
+  // Con n=3, el límite es floor(2^32/3)*3 = 4294967295. El valor 4294967295
+  // debe rechazarse y consumirse el siguiente del rng.
+  const i = Logic.elegirIndice(3, rngFijo([4294967295, 7]));
+  assert.strictEqual(i, 1, 'debió descartar el valor sesgado y usar el 7');
+});
+
+test('elegirIndice reparte parejo en 10 000 tiradas', () => {
+  const n = 5, tiradas = 10000, cuentas = new Array(n).fill(0);
+  for (let k = 0; k < tiradas; k++) cuentas[Logic.elegirIndice(n)]++;
+  const esperado = tiradas / n;
+  for (const c of cuentas) {
+    const desvio = Math.abs(c - esperado) / esperado;
+    assert.ok(desvio < 0.05, `desvío de ${(desvio * 100).toFixed(1)}% en ${cuentas}`);
+  }
+});
+
+test('crearEstado limpia y da ids únicos', () => {
+  const e = Logic.crearEstado(['  Ana  ', 'Luis', '', '   ', 'Ana']);
+  assert.strictEqual(e.participantes.length, 3, 'descarta vacíos, conserva duplicados');
+  assert.deepStrictEqual(e.participantes.map(p => p.nombre), ['Ana', 'Luis', 'Ana']);
+  assert.strictEqual(new Set(e.participantes.map(p => p.id)).size, 3);
+  assert.deepStrictEqual(e.yaPasaron, []);
+  assert.strictEqual(e.fase, 'preparacion');
+});
+
+test('iniciarDisparo no muta el estado que recibe', () => {
+  const antes = Logic.crearEstado(['Ana', 'Luis']);
+  const copia = JSON.parse(JSON.stringify(antes));
+  Logic.iniciarDisparo(antes);
+  assert.deepStrictEqual(antes, copia);
+});
+
+test('resolverDisparo mueve al elegido a yaPasaron', () => {
+  let e = Logic.crearEstado(['Ana', 'Luis', 'Sofía']);
+  const r = Logic.resolverDisparo(e, 1);
+  assert.strictEqual(r.elegido.nombre, 'Luis');
+  assert.deepStrictEqual(r.estado.participantes.map(p => p.nombre), ['Ana', 'Sofía']);
+  assert.deepStrictEqual(r.estado.yaPasaron.map(p => p.nombre), ['Luis']);
+  assert.strictEqual(r.estado.fase, 'revelado');
+});
+
+test('al caer el último se entra a finDeRonda', () => {
+  let e = Logic.crearEstado(['Ana']);
+  const r = Logic.resolverDisparo(e, 0);
+  assert.strictEqual(r.estado.fase, 'finDeRonda');
+  assert.strictEqual(r.estado.participantes.length, 0);
+});
+
+test('una ronda completa agota a todos exactamente una vez', () => {
+  const nombres = ['Ana', 'Luis', 'Sofía', 'Diego', 'Mar', 'Iván', 'Rocío'];
+  let e = Logic.crearEstado(nombres);
+  const orden = [];
+  while (e.participantes.length) {
+    const ini = Logic.iniciarDisparo(e);
+    const res = Logic.resolverDisparo(ini.estado, ini.indice);
+    orden.push(res.elegido.nombre);
+    e = res.estado;
+  }
+  assert.strictEqual(orden.length, nombres.length, 'nadie de más, nadie de menos');
+  assert.deepStrictEqual([...orden].sort(), [...nombres].sort(), 'sin repetidos ni faltantes');
+  assert.strictEqual(e.fase, 'finDeRonda');
+});
+
+test('reiniciarRonda devuelve a todos a la rama sin perder a nadie', () => {
+  let e = Logic.crearEstado(['Ana', 'Luis', 'Sofía']);
+  e = Logic.resolverDisparo(e, 0).estado;
+  e = Logic.resolverDisparo(e, 0).estado;
+  const r = Logic.reiniciarRonda(e);
+  assert.strictEqual(r.participantes.length, 3);
+  assert.deepStrictEqual(r.participantes.map(p => p.nombre).sort(), ['Ana', 'Luis', 'Sofía']);
+  assert.deepStrictEqual(r.yaPasaron, []);
+  assert.strictEqual(r.fase, 'preparacion');
+});

@@ -35,7 +35,82 @@
     };
   }
 
-  var Logic = { PELOS: PELOS, GORROS: GORROS, hash: hash, identidad: identidad };
+  // rng por omisión: un uint32 criptográfico. Existe igual en navegador y en Node 22.
+  function rngPorOmision() {
+    var buf = new Uint32Array(1);
+    (typeof crypto !== 'undefined' ? crypto : require('crypto').webcrypto).getRandomValues(buf);
+    return buf[0];
+  }
+
+  // Uniforme de verdad. Con `% n` a secas los primeros índices salen un pelo más
+  // seguido; se nota poco en una reunión, pero la corrección cuesta dos líneas y
+  // significa que si alguien acusa a la app de tener favoritos, hay respuesta.
+  function elegirIndice(n, rng) {
+    if (!Number.isInteger(n) || n < 1) throw new Error('elegirIndice necesita n >= 1');
+    rng = rng || rngPorOmision;
+    var limite = Math.floor(0x100000000 / n) * n, v;
+    do { v = rng(); } while (v >= limite);
+    return v % n;
+  }
+
+  var contadorId = 0;
+  function nuevoId() {
+    contadorId += 1;
+    return 'p' + contadorId + '-' + hash(String(contadorId) + ':' + contadorId * 2654435761).toString(36);
+  }
+
+  function crearEstado(nombres) {
+    return {
+      participantes: (nombres || [])
+        .map(function (n) { return String(n).trim(); })
+        .filter(function (n) { return n.length > 0; })
+        .map(function (n) { return { id: nuevoId(), nombre: n }; }),
+      yaPasaron: [],
+      fase: 'preparacion',
+      proyector: false
+    };
+  }
+
+  function clonar(estado) {
+    return {
+      participantes: estado.participantes.slice(),
+      yaPasaron: estado.yaPasaron.slice(),
+      fase: estado.fase,
+      proyector: estado.proyector
+    };
+  }
+
+  function iniciarDisparo(estado, rng) {
+    if (!estado.participantes.length) throw new Error('no hay a quién dispararle');
+    var siguiente = clonar(estado);
+    siguiente.fase = 'disparando';
+    return { estado: siguiente, indice: elegirIndice(estado.participantes.length, rng) };
+  }
+
+  function resolverDisparo(estado, indice) {
+    var elegido = estado.participantes[indice];
+    if (!elegido) throw new Error('índice fuera de la rama: ' + indice);
+    var siguiente = clonar(estado);
+    siguiente.participantes = estado.participantes.filter(function (_, i) { return i !== indice; });
+    siguiente.yaPasaron = estado.yaPasaron.concat([elegido]);
+    siguiente.fase = siguiente.participantes.length ? 'revelado' : 'finDeRonda';
+    return { estado: siguiente, elegido: elegido };
+  }
+
+  function reiniciarRonda(estado) {
+    var siguiente = clonar(estado);
+    siguiente.participantes = estado.yaPasaron.concat(estado.participantes);
+    siguiente.yaPasaron = [];
+    siguiente.fase = 'preparacion';
+    return siguiente;
+  }
+
+  var Logic = {
+    PELOS: PELOS, GORROS: GORROS, hash: hash, identidad: identidad,
+    elegirIndice: elegirIndice, crearEstado: crearEstado,
+    iniciarDisparo: iniciarDisparo, resolverDisparo: resolverDisparo,
+    reiniciarRonda: reiniciarRonda
+  };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = Logic;
   else global.Logic = Logic;
