@@ -76,6 +76,10 @@
     } else {
       el.disparar.textContent = 'Disparar';
       el.aviso.textContent = estado.participantes.length ? '' : 'Agrega a alguien primero.';
+      if (estado.participantes.length > 16) {
+        el.aviso.textContent = 'Son ' + estado.participantes.length +
+          ' monos: la rama se ve apretada, pero funciona.';
+      }
     }
   }
 
