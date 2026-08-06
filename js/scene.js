@@ -93,9 +93,11 @@
       var y = anclaY + largo;
       var curva = (i % 2 ? 9 : -9) * escala;
 
+      // Se identifica por el id estable de la persona, NO por su posición: la lista
+      // se va acortando con cada disparo y los índices dejarían de coincidir.
       s += '<g class="colgado" style="' +
            '--vaiven:' + id.vaiven + 's; --retraso:-' + id.retraso + 's; ' +
-           '--pivote:' + (x + 30 * escala) + 'px ' + anclaY + 'px" data-indice="' + i + '">';
+           '--pivote:' + (x + 30 * escala) + 'px ' + anclaY + 'px" data-id="' + persona.id + '">';
       // liana
       s += '<path d="M' + (x + 30 * escala) + ',' + anclaY + ' q' + curva + ',' + (largo / 2) +
            ' 0,' + largo + '" fill="none" stroke="' + HOJA + '" stroke-width="' +
@@ -107,7 +109,7 @@
                            texto: Logic.recortar(persona.nombre, 14) });
       s += '</g>';
 
-      monos.push({ persona: persona, cx: x + 30 * escala, cy: y + 40 * escala, escala: escala });
+      monos.push({ id: persona.id, cx: x + 30 * escala, cy: y + 40 * escala, escala: escala });
     });
 
     capaMonos.innerHTML = s;
@@ -125,9 +127,15 @@
     capaFondo.after(g);
   }
 
-  function posicionDe(indice) {
-    var m = monos[indice];
-    return m ? { x: m.cx, y: m.cy } : null;
+  function posicionDe(id) {
+    for (var i = 0; i < monos.length; i++) {
+      if (monos[i].id === id) return { x: monos[i].cx, y: monos[i].cy };
+    }
+    return null;
+  }
+
+  function olvidar(id) {
+    monos = monos.filter(function (m) { return m.id !== id; });
   }
 
   // Animador mínimo: corre f(t) con t de 0 a 1 durante ms, y resuelve al terminar.
@@ -159,10 +167,13 @@
     };
   }
 
+  // Toda la coreografía va al doble de los tiempos del diseño original (2.1 s -> 4.2 s):
+  // se pidió más suspenso. Quien activó "reducir movimiento" se queda con los cortos,
+  // que es justamente para lo que sirve esa preferencia.
   function tiempos() {
     return reducido
       ? { tensar: 120, soltar: 30, vuelo: 300, impacto: 50, caida: 200 }
-      : { tensar: 450, soltar: 70, vuelo: 830, impacto: 100, caida: 650 };
+      : { tensar: 900, soltar: 140, vuelo: 1660, impacto: 200, caida: 1300 };
   }
 
   function lluvia(x, y) {
@@ -188,11 +199,17 @@
     capaVuelo.appendChild(capa);
     var nodos = capa.querySelectorAll('.pieza');
 
-    animar(reducido ? 320 : 1100, function (t) {
+    // Posición en forma cerrada, no integrada por cuadro: así el recorrido es el mismo
+    // sin importar cuánto dure la animación. Integrando por cuadro, alargar la duración
+    // mandaría los plátanos fuera de la pantalla en vez de hacerlos caer más despacio.
+    var CUADROS = 66, GRAVEDAD = 740;
+    animar(reducido ? 320 : 2200, function (t) {
       piezas.forEach(function (p, k) {
-        p.x += p.vx; p.y += p.vy; p.vy += .34; p.rot += p.giro;
+        var px = p.x + p.vx * CUADROS * t;
+        var py = p.y + p.vy * CUADROS * t + GRAVEDAD * t * t;
+        var rot = p.rot + p.giro * CUADROS * t;
         nodos[k].setAttribute('transform',
-          'translate(' + p.x.toFixed(1) + ',' + p.y.toFixed(1) + ') rotate(' + p.rot.toFixed(1) + ')');
+          'translate(' + px.toFixed(1) + ',' + py.toFixed(1) + ') rotate(' + rot.toFixed(1) + ')');
         nodos[k].setAttribute('opacity', (1 - t * t).toFixed(2));
       });
     }).then(function () { capa.remove(); });
@@ -206,15 +223,15 @@
       '<path d="M0,-20 v-11 M0,20 v11 M-20,0 h-11 M20,0 h11 ' +
       'M-15,-15 l-8,-8 M15,15 l8,8 M15,-15 l8,-8 M-15,15 l-8,8"/></g>';
     capaVuelo.appendChild(g);
-    setTimeout(function () { g.remove(); }, reducido ? 120 : 260);
+    setTimeout(function () { g.remove(); }, reducido ? 120 : 520);
   }
 
-  function shoot(indice) {
-    var destino = posicionDe(indice);
-    if (!destino) return Promise.reject(new Error('no hay mono en el índice ' + indice));
+  function shoot(id) {
+    var destino = posicionDe(id);
+    if (!destino) return Promise.reject(new Error('no hay ningún mono con id ' + id));
 
     var T = tiempos();
-    var grupo = capaMonos.querySelector('[data-indice="' + indice + '"]');
+    var grupo = capaMonos.querySelector('[data-id="' + id + '"]');
     var punta = Sprites.puntaFlecha({ escala: ARQUERO.escala });
     var origen = { x: ARQUERO.x + punta.x, y: ARQUERO.y + punta.y };
     // Control levantado por encima de los dos extremos: la parábola sale distinta
@@ -265,7 +282,7 @@
         grupo.setAttribute('opacity', t > .75 ? ((1 - t) / .25).toFixed(2) : '1');
       });
     })
-    .then(function () { if (grupo) grupo.remove(); });
+    .then(function () { if (grupo) grupo.remove(); olvidar(id); });
   }
 
   var Scene = { init: init, render: render, posicionDe: posicionDe, shoot: shoot,

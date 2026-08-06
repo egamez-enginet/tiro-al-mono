@@ -78,7 +78,7 @@ body {
   border: 3px solid var(--ox);
   box-shadow: 6px 6px 0 var(--teal);
   text-align: center;
-  animation: cartel-entra .32s cubic-bezier(.2, 1.5, .4, 1) both;
+  animation: cartel-entra .64s cubic-bezier(.2, 1.5, .4, 1) both;
 }
 .cartel[hidden] { display: none; }
 .cartel span {
@@ -234,7 +234,7 @@ body.proyector .cartel strong { font-size: 44px; }
 .colgado.cayendo { animation: none; }
 
 /* ── sacudón del impacto ── */
-.sacudida { animation: sacudir .1s linear 2; }
+.sacudida { animation: sacudir .2s linear 2; }
 @keyframes sacudir {
   0%, 100% { transform: translateX(0); }
   25%  { transform: translateX(-3px); }
