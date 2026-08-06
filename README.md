@@ -6,9 +6,14 @@ sesión, y la ronda sigue hasta que la rama queda vacía — al último también
 
 No hay ganador ni premio. Es un repartidor de turnos que da risa.
 
+**En vivo:** https://egamez-enginet.github.io/tiro-al-mono/
+
 ## Usar
 
-Doble clic en `index.html`. No hay que instalar nada.
+Abre el link, o doble clic en `index.html`. No hay que instalar nada.
+
+Los nombres nunca salen de tu navegador: se guardan en `localStorage` y no hay servidor al que
+mandarlos. Le puedes pasar el link al equipo sin que nadie publique su nombre en ningún lado.
 
 - **Disparar** — o la barra espaciadora
 - **F** — modo proyector, para la pantalla de la sala. `Escape` sale
