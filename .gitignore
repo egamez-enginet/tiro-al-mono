@@ -1,0 +1,5 @@
+.superpowers/
+.playwright-mcp/
+*.png
+Thumbs.db
+desktop.ini
