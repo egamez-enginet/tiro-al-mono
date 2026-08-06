@@ -167,13 +167,14 @@
     };
   }
 
-  // Toda la coreografía va al doble de los tiempos del diseño original (2.1 s -> 4.2 s):
-  // se pidió más suspenso. Quien activó "reducir movimiento" se queda con los cortos,
-  // que es justamente para lo que sirve esa preferencia.
+  // Toda la coreografía va a 4x los tiempos del diseño original (2.1 s -> 8.4 s):
+  // se pidió más suspenso, dos veces. Para cambiar el ritmo, este es el único lugar.
+  // Quien activó "reducir movimiento" se queda con los cortos, que es justamente
+  // para lo que sirve esa preferencia.
   function tiempos() {
     return reducido
       ? { tensar: 120, soltar: 30, vuelo: 300, impacto: 50, caida: 200 }
-      : { tensar: 900, soltar: 140, vuelo: 1660, impacto: 200, caida: 1300 };
+      : { tensar: 1800, soltar: 280, vuelo: 3320, impacto: 400, caida: 2600 };
   }
 
   function lluvia(x, y) {
@@ -203,7 +204,7 @@
     // sin importar cuánto dure la animación. Integrando por cuadro, alargar la duración
     // mandaría los plátanos fuera de la pantalla en vez de hacerlos caer más despacio.
     var CUADROS = 66, GRAVEDAD = 740;
-    animar(reducido ? 320 : 2200, function (t) {
+    animar(reducido ? 320 : 4400, function (t) {
       piezas.forEach(function (p, k) {
         var px = p.x + p.vx * CUADROS * t;
         var py = p.y + p.vy * CUADROS * t + GRAVEDAD * t * t;
@@ -223,7 +224,7 @@
       '<path d="M0,-20 v-11 M0,20 v11 M-20,0 h-11 M20,0 h11 ' +
       'M-15,-15 l-8,-8 M15,15 l8,8 M15,-15 l8,-8 M-15,15 l-8,8"/></g>';
     capaVuelo.appendChild(g);
-    setTimeout(function () { g.remove(); }, reducido ? 120 : 520);
+    setTimeout(function () { g.remove(); }, reducido ? 120 : 1040);
   }
 
   function shoot(id) {

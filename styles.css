@@ -78,7 +78,7 @@ body {
   border: 3px solid var(--ox);
   box-shadow: 6px 6px 0 var(--teal);
   text-align: center;
-  animation: cartel-entra .64s cubic-bezier(.2, 1.5, .4, 1) both;
+  animation: cartel-entra 1.28s cubic-bezier(.2, 1.5, .4, 1) both;
 }
 .cartel[hidden] { display: none; }
 .cartel span {
@@ -111,7 +111,7 @@ body {
   background: rgba(244, 233, 214, .95);
   /* Keyframe propio: el del cartel lleva translateX(-50%) para centrarse, y aquí
      correría el velo media pantalla a la izquierda. */
-  animation: cierre-entra .6s ease both;
+  animation: cierre-entra 1.2s ease both;
 }
 @keyframes cierre-entra {
   from { opacity: 0; }
@@ -282,7 +282,7 @@ body.proyector .marco {
 .colgado.cayendo { animation: none; }
 
 /* ── sacudón del impacto ── */
-.sacudida { animation: sacudir .2s linear 2; }
+.sacudida { animation: sacudir .4s linear 2; }
 @keyframes sacudir {
   0%, 100% { transform: translateX(0); }
   25%  { transform: translateX(-3px); }

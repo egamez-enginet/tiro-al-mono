@@ -46,11 +46,14 @@ Por eso la escena identifica a cada mono por el `id` de la persona y no por su p
 lista: la lista se acorta con cada disparo, y con índices terminaría cayendo un mono distinto al
 que se anuncia.
 
-### La secuencia dura 4.2 s
+### La secuencia dura 8.4 s
 
-Tensado 900 ms, suelta 140, vuelo 1660, impacto 200, caída 1300. Si quieres cambiar el ritmo, todo
-está en la función `tiempos()` de `js/scene.js`. Quien tenga activado "reducir movimiento" en su
-sistema recibe una versión de 700 ms.
+Tensado 1800 ms, suelta 280, vuelo 3320, impacto 400, caída 2600. Si se siente eterna después de
+la cuarta persona, todo el ritmo vive en la función `tiempos()` de `js/scene.js`: divide esos
+números y ya. Quien tenga activado "reducir movimiento" en su sistema recibe una versión de 700 ms.
+
+La lluvia de plátanos calcula la posición en forma cerrada en vez de integrar la física por cuadro,
+justamente para que cambiar la duración cambie la velocidad y no la distancia recorrida.
 
 ## Pruebas
 
