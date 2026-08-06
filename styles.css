@@ -78,7 +78,7 @@ body {
   border: 3px solid var(--ox);
   box-shadow: 6px 6px 0 var(--teal);
   text-align: center;
-  animation: cartel-entra 1.28s cubic-bezier(.2, 1.5, .4, 1) both;
+  animation: cartel-entra calc(.32s * var(--mult, 2)) cubic-bezier(.2, 1.5, .4, 1) both;
 }
 .cartel[hidden] { display: none; }
 .cartel span {
@@ -111,7 +111,7 @@ body {
   background: rgba(244, 233, 214, .95);
   /* Keyframe propio: el del cartel lleva translateX(-50%) para centrarse, y aquí
      correría el velo media pantalla a la izquierda. */
-  animation: cierre-entra 1.2s ease both;
+  animation: cierre-entra calc(.3s * var(--mult, 2)) ease both;
 }
 @keyframes cierre-entra {
   from { opacity: 0; }
@@ -244,6 +244,37 @@ body {
 .panel-pie { display: flex; gap: 9px; }
 .panel-pie button { flex: 1; font-size: 12px; }
 
+.ajuste-animacion { font-size: 12px; }
+.ajuste-animacion label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 8.5px;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--ox);
+}
+.ajuste-animacion select {
+  width: 100%;
+  padding: 8px 10px;
+  border: 2px solid var(--madera);
+  background: var(--papel);
+  font: 13px var(--texto);
+  color: var(--tinta);
+  cursor: pointer;
+}
+.ajuste-animacion select:focus { outline: 2px solid var(--laton); outline-offset: 1px; }
+.ajuste-animacion .nota {
+  margin: 8px 0 0;
+  padding: 9px 11px;
+  background: var(--papel-2);
+  border-left: 3px solid var(--laton);
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: var(--madera);
+}
+.ajuste-animacion .nota[hidden] { display: none; }
+body.proyector .ajuste-animacion { display: none; }
+
 /* ── modo proyector ── */
 body.proyector .panel-caja:first-child,
 body.proyector .panel-pie,
@@ -282,17 +313,23 @@ body.proyector .marco {
 .colgado.cayendo { animation: none; }
 
 /* ── sacudón del impacto ── */
-.sacudida { animation: sacudir .4s linear 2; }
+.sacudida { animation: sacudir calc(.1s * var(--mult, 2)) linear 2; }
 @keyframes sacudir {
   0%, 100% { transform: translateX(0); }
   25%  { transform: translateX(-3px); }
   75%  { transform: translateX(3px); }
 }
 
-/* ── quien pidió menos movimiento ── */
-@media (prefers-reduced-motion: reduce) {
-  .cartel { animation-duration: .01s; }
-  .tirar { transition: none; }
-  .colgado { animation: none; }
-  .sacudida { animation: none; }
-}
+/* ── modo de animación corta ──
+   Va por clase en <body> y no por @media (prefers-reduced-motion), porque la
+   preferencia del sistema solo fija el valor inicial: la casilla del panel tiene
+   que poder devolver la animación completa. Con la media query, el balanceo y el
+   sacudón se quedaban apagados aunque el usuario desmarcara la casilla. */
+/* --mult lo pone la app según la velocidad elegida (ver los calc() de arriba), para que
+   las animaciones de CSS sigan el mismo ritmo que las de JS sin repetir los números.
+
+   En la más rápida se apaga el balanceo y el sacudón: es la velocidad que hereda
+   quien pidió menos movimiento en su sistema. */
+body.animacion-corta .colgado { animation: none; }
+body.animacion-corta .sacudida { animation: none; }
+body.animacion-corta .tirar { transition: none; }

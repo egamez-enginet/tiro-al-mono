@@ -156,6 +156,54 @@ test('deserializar no arrastra una fase a medio disparo', () => {
     'una recarga a media flecha no debe dejar el botón bloqueado para siempre');
 });
 
+test('velocidad devuelve la pedida y cae en la de omisión si no existe', () => {
+  assert.strictEqual(Logic.velocidad('rapida').id, 'rapida');
+  assert.strictEqual(Logic.velocidad('lentisima').mult, 4);
+  for (const basura of [undefined, null, '', 'turbo', 42]) {
+    assert.strictEqual(Logic.velocidad(basura).id, Logic.VELOCIDAD_POR_OMISION,
+      `no cayó en la de omisión con ${basura}`);
+  }
+});
+
+test('las velocidades van de menor a mayor y sin repetir', () => {
+  const mults = Logic.VELOCIDADES.map(v => v.mult);
+  assert.deepStrictEqual(mults, [...mults].sort((a, b) => a - b));
+  assert.strictEqual(new Set(mults).size, mults.length);
+  assert.ok(Logic.VELOCIDADES.some(v => v.id === Logic.VELOCIDAD_POR_OMISION));
+});
+
+test('duracionTotal escala con el multiplicador', () => {
+  assert.strictEqual(Logic.duracionTotal('normal'), 2100);
+  assert.strictEqual(Logic.duracionTotal('lenta'), 4200);
+  assert.strictEqual(Logic.duracionTotal('lentisima'), 8400);
+  assert.ok(Logic.duracionTotal('rapida') < 800);
+});
+
+test('crearEstado arranca en la velocidad por omisión', () => {
+  assert.strictEqual(Logic.crearEstado(['Ana']).velocidad, Logic.VELOCIDAD_POR_OMISION);
+});
+
+test('la velocidad sobrevive el guardado y se sanea si viene corrupta', () => {
+  let e = Logic.crearEstado(['Ana', 'Luis']);
+  e.velocidad = 'lentisima';
+  assert.strictEqual(Logic.deserializar(Logic.serializar(e)).velocidad, 'lentisima');
+
+  const corrupto = JSON.parse(Logic.serializar(e));
+  corrupto.velocidad = 'turbo';
+  assert.strictEqual(Logic.deserializar(JSON.stringify(corrupto)).velocidad,
+    Logic.VELOCIDAD_POR_OMISION, 'una velocidad inventada no debe tirar el estado');
+});
+
+test('migra el booleano animacionCorta de la versión anterior', () => {
+  const viejoCorto = JSON.stringify({ v: 1, participantes: [], yaPasaron: [],
+    fase: 'preparacion', proyector: false, animacionCorta: true });
+  assert.strictEqual(Logic.deserializar(viejoCorto).velocidad, 'rapida');
+
+  const viejoLargo = JSON.stringify({ v: 1, participantes: [], yaPasaron: [],
+    fase: 'preparacion', proyector: false, animacionCorta: false });
+  assert.strictEqual(Logic.deserializar(viejoLargo).velocidad, Logic.VELOCIDAD_POR_OMISION);
+});
+
 test('recortar acorta con puntos y respeta lo corto', () => {
   assert.strictEqual(Logic.recortar('Ana', 14), 'Ana');
   assert.strictEqual(Logic.recortar('Bartolomé Estanislao', 14), 'Bartolomé Est…');

@@ -46,14 +46,23 @@ Por eso la escena identifica a cada mono por el `id` de la persona y no por su p
 lista: la lista se acorta con cada disparo, y con índices terminaría cayendo un mono distinto al
 que se anuncia.
 
-### La secuencia dura 8.4 s
+### La velocidad se elige en el panel
 
-Tensado 1800 ms, suelta 280, vuelo 3320, impacto 400, caída 2600. Si se siente eterna después de
-la cuarta persona, todo el ritmo vive en la función `tiempos()` de `js/scene.js`: divide esos
-números y ya. Quien tenga activado "reducir movimiento" en su sistema recibe una versión de 700 ms.
+**Velocidad del disparo** ofrece cuatro ritmos: Rápida (0.7 s), Normal (2.1 s), Lenta (4.2 s) y
+Lentísima (8.4 s). La elección se guarda.
+
+Por dentro hay una sola tabla de tiempos base —2.1 s en total, en `BASE` de `js/scene.js`— y un
+multiplicador. El CSS usa el mismo multiplicador vía la variable `--mult`, para no tener los
+números repetidos en dos lenguajes. Las velocidades viven en `Logic.VELOCIDADES`: si quieres otra,
+agrégala ahí y aparece sola en el selector.
+
+**Si tu sistema tiene los efectos de animación desactivados** (en Windows: Configuración →
+Accesibilidad → Efectos visuales → Efectos de animación), el navegador lo reporta como
+`prefers-reduced-motion` y la app arranca en Rápida, avisándote por qué. A partir de ahí manda el
+selector: aquí la animación no es adorno, es la función del programa.
 
 La lluvia de plátanos calcula la posición en forma cerrada en vez de integrar la física por cuadro,
-justamente para que cambiar la duración cambie la velocidad y no la distancia recorrida.
+justamente para que cambiar la velocidad cambie la velocidad y no la distancia recorrida.
 
 ## Pruebas
 

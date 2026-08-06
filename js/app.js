@@ -156,6 +156,7 @@
   function reemplazarLista(texto) {
     var nuevo = Logic.crearEstado(texto.split(/\r?\n/));
     nuevo.proyector = estado.proyector;
+    nuevo.velocidad = estado.velocidad;
     estado = nuevo;
     ocultarCartel();
     guardar();
@@ -205,6 +206,30 @@
     pintar();
   }
 
+  function aplicarVelocidad() {
+    var v = Logic.velocidad(estado.velocidad);
+    Scene.setMultiplicador(v.mult);
+    document.body.style.setProperty('--mult', String(v.mult));
+    document.body.classList.toggle('animacion-corta', v.mult < 1);
+    el.velocidad.value = v.id;
+  }
+
+  function cambiarVelocidad(id) {
+    estado = Object.assign({}, estado, { velocidad: Logic.velocidad(id).id });
+    aplicarVelocidad();
+    guardar();
+  }
+
+  function llenarVelocidades() {
+    el.velocidad.innerHTML = '';
+    Logic.VELOCIDADES.forEach(function (v) {
+      var op = document.createElement('option');
+      op.value = v.id;
+      op.textContent = v.etiqueta + ' — ' + (Logic.duracionTotal(v.id) / 1000).toFixed(1) + ' s';
+      el.velocidad.appendChild(op);
+    });
+  }
+
   function proyector() {
     estado = Object.assign({}, estado, { proyector: !estado.proyector });
     guardar();
@@ -230,10 +255,23 @@
     el.reiniciar = $('reiniciar');
     el.proyector = $('proyector');
     el.aviso = $('aviso');
-
-    estado = cargar() || Logic.crearEstado([]);
+    el.velocidad = $('velocidad');
+    el.notaReducido = $('nota-reducido');
 
     Scene.init(el.escena);
+    llenarVelocidades();
+
+    var guardado = cargar();
+    estado = guardado || Logic.crearEstado([]);
+
+    // La primera vez se hereda la preferencia del sistema; a partir de ahí manda el
+    // selector. Y se explica por qué arrancó en Rápida: sin ese aviso, la animación
+    // dura 0.7 s y no hay manera de saber que fue el sistema quien lo decidió.
+    if (!guardado && Scene.prefiereMenosMovimiento()) {
+      estado.velocidad = 'rapida';
+    }
+    if (Scene.prefiereMenosMovimiento()) el.notaReducido.hidden = false;
+    aplicarVelocidad();
 
     el.formaAgregar.addEventListener('submit', function (ev) {
       ev.preventDefault();
@@ -248,6 +286,9 @@
     el.disparar.addEventListener('click', disparar);
     el.reiniciar.addEventListener('click', function () { reiniciar(false); });
     el.proyector.addEventListener('click', proyector);
+    el.velocidad.addEventListener('change', function (ev) {
+      cambiarVelocidad(ev.target.value);
+    });
     document.addEventListener('keydown', atajos);
 
     pintar();

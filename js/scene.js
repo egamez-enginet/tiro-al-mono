@@ -9,8 +9,8 @@
   var TEAL = '#0F4C4A', MADERA = '#7A4A22', HOJA = '#4E6E3A';
 
   var svg = null, capaFondo = null, capaMonos = null, capaVuelo = null;
-  var monos = [];                   // {persona, cx, cy, escala}
-  var reducido = false;
+  var monos = [];                   // {id, cx, cy, escala}
+  var multiplicador = 2;            // lo fija la app desde el panel
 
   function crear(nombre) {
     return document.createElementNS('http://www.w3.org/2000/svg', nombre);
@@ -25,9 +25,18 @@
     svg.appendChild(capaFondo);
     svg.appendChild(capaMonos);
     svg.appendChild(capaVuelo);
-    reducido = !!(global.matchMedia &&
-                  global.matchMedia('(prefers-reduced-motion: reduce)').matches);
     pintarFondo();
+  }
+
+  // La preferencia del sistema solo fija el valor inicial; quien manda es la app,
+  // porque aquí la animación no es adorno: es la función del programa.
+  function prefiereMenosMovimiento() {
+    return !!(global.matchMedia &&
+              global.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  }
+
+  function setMultiplicador(m) {
+    multiplicador = (typeof m === 'number' && m > 0) ? m : 2;
   }
 
   function pintarFondo() {
@@ -167,19 +176,23 @@
     };
   }
 
-  // Toda la coreografía va a 4x los tiempos del diseño original (2.1 s -> 8.4 s):
-  // se pidió más suspenso, dos veces. Para cambiar el ritmo, este es el único lugar.
-  // Quien activó "reducir movimiento" se queda con los cortos, que es justamente
-  // para lo que sirve esa preferencia.
+  // Tiempos base: 2.1 s en total. La velocidad elegida en el panel los multiplica,
+  // así que el ritmo se calibra en vivo en vez de a ojo desde el código.
+  var BASE = { tensar: 450, soltar: 70, vuelo: 830, impacto: 100, caida: 650 };
+
   function tiempos() {
-    return reducido
-      ? { tensar: 120, soltar: 30, vuelo: 300, impacto: 50, caida: 200 }
-      : { tensar: 1800, soltar: 280, vuelo: 3320, impacto: 400, caida: 2600 };
+    return {
+      tensar:  Math.round(BASE.tensar * multiplicador),
+      soltar:  Math.round(BASE.soltar * multiplicador),
+      vuelo:   Math.round(BASE.vuelo * multiplicador),
+      impacto: Math.round(BASE.impacto * multiplicador),
+      caida:   Math.round(BASE.caida * multiplicador)
+    };
   }
 
   function lluvia(x, y) {
     var piezas = [], i, s = '';
-    var cuantas = reducido ? 6 : 16;
+    var cuantas = multiplicador < 1 ? 6 : 16;
     for (i = 0; i < cuantas; i++) {
       // Deliberadamente pseudoaleatorio y no determinista: cada impacto se ve
       // distinto, y nadie audita la trayectoria de un plátano.
@@ -204,7 +217,7 @@
     // sin importar cuánto dure la animación. Integrando por cuadro, alargar la duración
     // mandaría los plátanos fuera de la pantalla en vez de hacerlos caer más despacio.
     var CUADROS = 66, GRAVEDAD = 740;
-    animar(reducido ? 320 : 4400, function (t) {
+    animar(1100 * multiplicador, function (t) {
       piezas.forEach(function (p, k) {
         var px = p.x + p.vx * CUADROS * t;
         var py = p.y + p.vy * CUADROS * t + GRAVEDAD * t * t;
@@ -224,7 +237,7 @@
       '<path d="M0,-20 v-11 M0,20 v11 M-20,0 h-11 M20,0 h11 ' +
       'M-15,-15 l-8,-8 M15,15 l8,8 M15,-15 l8,-8 M-15,15 l-8,8"/></g>';
     capaVuelo.appendChild(g);
-    setTimeout(function () { g.remove(); }, reducido ? 120 : 1040);
+    setTimeout(function () { g.remove(); }, Math.round(260 * multiplicador));
   }
 
   function shoot(id) {
@@ -287,6 +300,8 @@
   }
 
   var Scene = { init: init, render: render, posicionDe: posicionDe, shoot: shoot,
+                setMultiplicador: setMultiplicador,
+                prefiereMenosMovimiento: prefiereMenosMovimiento,
                 ANCHO: ANCHO, ALTO: ALTO };
 
   global.Scene = Scene;

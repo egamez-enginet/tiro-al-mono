@@ -67,7 +67,8 @@
         .map(function (n) { return { id: nuevoId(), nombre: n }; }),
       yaPasaron: [],
       fase: 'preparacion',
-      proyector: false
+      proyector: false,
+      velocidad: VELOCIDAD_POR_OMISION
     };
   }
 
@@ -76,7 +77,8 @@
       participantes: estado.participantes.slice(),
       yaPasaron: estado.yaPasaron.slice(),
       fase: estado.fase,
-      proyector: estado.proyector
+      proyector: estado.proyector,
+      velocidad: estado.velocidad
     };
   }
 
@@ -109,13 +111,35 @@
   var VERSION = 1;
   var FASES = ['preparacion', 'disparando', 'revelado', 'finDeRonda'];
 
+  // Multiplicador sobre los tiempos base de la animación (2.1 s en total).
+  // 'lenta' es el valor por omisión: 2.1 s se sintió apurado y 8.4 s eterno.
+  var VELOCIDADES = [
+    { id: 'rapida',    etiqueta: 'Rápida',    mult: 0.33 },
+    { id: 'normal',    etiqueta: 'Normal',    mult: 1 },
+    { id: 'lenta',     etiqueta: 'Lenta',     mult: 2 },
+    { id: 'lentisima', etiqueta: 'Lentísima', mult: 4 }
+  ];
+  var VELOCIDAD_POR_OMISION = 'lenta';
+
+  function velocidad(id) {
+    for (var i = 0; i < VELOCIDADES.length; i++) {
+      if (VELOCIDADES[i].id === id) return VELOCIDADES[i];
+    }
+    return velocidad(VELOCIDAD_POR_OMISION);
+  }
+
+  function duracionTotal(id) {
+    return Math.round(2100 * velocidad(id).mult);
+  }
+
   function serializar(estado) {
     return JSON.stringify({
       v: VERSION,
       participantes: estado.participantes,
       yaPasaron: estado.yaPasaron,
       fase: estado.fase,
-      proyector: !!estado.proyector
+      proyector: !!estado.proyector,
+      velocidad: velocidad(estado.velocidad).id
     });
   }
 
@@ -139,7 +163,11 @@
       participantes: d.participantes,
       yaPasaron: d.yaPasaron,
       fase: fase,
-      proyector: !!d.proyector
+      proyector: !!d.proyector,
+      // Estado guardado por una versión anterior: traía un booleano en vez del
+      // selector de velocidad. Se traduce en vez de descartarse, para no borrarle
+      // la lista a alguien que ya la tenía puesta.
+      velocidad: velocidad(d.velocidad || (d.animacionCorta ? 'rapida' : undefined)).id
     };
   }
 
@@ -152,7 +180,9 @@
     elegirIndice: elegirIndice, crearEstado: crearEstado,
     iniciarDisparo: iniciarDisparo, resolverDisparo: resolverDisparo,
     reiniciarRonda: reiniciarRonda,
-    LLAVE: LLAVE, serializar: serializar, deserializar: deserializar, recortar: recortar
+    LLAVE: LLAVE, serializar: serializar, deserializar: deserializar, recortar: recortar,
+    VELOCIDADES: VELOCIDADES, VELOCIDAD_POR_OMISION: VELOCIDAD_POR_OMISION,
+    velocidad: velocidad, duracionTotal: duracionTotal
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = Logic;
